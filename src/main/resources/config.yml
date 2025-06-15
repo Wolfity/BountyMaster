@@ -1,0 +1,36 @@
+# The cooldown between placing a bounty on someone
+bounty-creation-cooldown-minutes: 2
+
+# The cooldown between how often you can be bountied
+bounty-target-cooldown-minutes: 2
+
+placed-bounty-recently: "<red>You placed a bounty too recently, there is a {time} minute cooldown!"
+received-bounty-recently: "<red>This player has received a bounty too recently!"
+cancel-bounty-no-active: "<red>You have no active bounties on player '{target}'."
+cancel-bounty-player-not-found: "<red>Player '{target}' is not online or does not exist."
+cancel-bounty-success: "<green>Bounty on player '{target}' has been cancelled. Your reward has been refunded."
+cancel-bounty-announcement: "<red>The bounty on {target} from {player} has been cancelled!"
+bounty-completed-announcement: "<yellow>{player} has successfully claimed the bounty by killing {target} for a reward of <gold>${reward}!"
+# How long a bounty is active
+bounty-duration-minutes: 30
+
+return-money-on-bounty-expire: true
+bounty-expire-message: "<red>[Bounties] The bounty from {creator} on {target} has expired!"
+
+completed-bounty-board-gui-border-item: "GRAY_STAINED_GLASS_PANE"
+completed-bounty-board-icon-title: "<gold>Bounty Contract <yellow>on {target} <gold>(${price})"
+completed-bounty-board-icon-lore:
+  - "<yellow>Creator: <gold>{creator}"
+  - "<yellow>Target: <gold>{target}"
+  - "<yellow>Reward: <gold>${price}"
+  - "<yellow>Completed at: <gold>{completionTime}"
+
+bounty-board-gui-border-item: "GRAY_STAINED_GLASS_PANE"
+bounty-board-icon-title: "<gold>Bounty Contract <yellow>on {target} <gold>(${price})"
+bounty-board-icon-lore:
+  - "<yellow>Creator: <gold>{creator}"
+  - "<yellow>Target: <gold>{target}"
+  - "<yellow>Reward: <gold>${price}"
+  - "<yellow>Expires: <gold>{expireTime}"
+
+bounty-announcement: "<aqua>{creator} has placed a bounty on {target} for ${rewardAmount}. <red>Expires in {expiry}"
