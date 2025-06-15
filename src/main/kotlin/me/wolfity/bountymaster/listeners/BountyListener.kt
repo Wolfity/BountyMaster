@@ -62,6 +62,7 @@ class BountyListener : Listener {
             launchAsync {
                 plugin.bountyManager.completeBounty(bountyByKilled.id, killer.uuid)
             }
+            plugin.economy.depositPlayer(killer, bountyByKilled.reward.toDouble())
             BountyCompletedEvent(killer, killed, bountyByKilled).call(plugin)
         }
     }

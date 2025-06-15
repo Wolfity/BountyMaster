@@ -170,12 +170,12 @@ class BountyManager {
 
     private fun hasRecentActiveBountyOnTarget(target: UUID, timeWindowMillis: Long): Boolean {
         val now = System.currentTimeMillis()
-        return bountiesByTarget[target]?.any { (it.createdAt + it.duration) >= (now - timeWindowMillis) } == true
+        return bountiesByTarget[target]?.any { (it.createdAt + it.duration) >= (now - timeWindowMillis) && !it.isCompleted() } == true
     }
 
     private fun hasPlayerPlacedActiveBountyRecently(creator: UUID, timeWindowMillis: Long): Boolean {
         val now = System.currentTimeMillis()
-        return bountiesByCreator[creator]?.any { (it.createdAt + it.duration) >= (now - timeWindowMillis) } == true
+        return bountiesByCreator[creator]?.any { (it.createdAt + it.duration) >= (now - timeWindowMillis) && !it.isCompleted() } == true
     }
 
     suspend fun expireBounty(bountyId: Long): Boolean = newSuspendedTransaction {
