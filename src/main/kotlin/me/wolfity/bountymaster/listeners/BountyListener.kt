@@ -57,7 +57,7 @@ class BountyListener : Listener {
         } ?: return
 
 
-        val bountyByKilled = plugin.bountyManager.getBountyByTarget(killed.uuid) ?: return
+        val bountyByKilled = plugin.bountyManager.getActiveBountyByTarget(killed.uuid) ?: return
         if (event.finalDamage >= killed.health) {
             launchAsync {
                 plugin.bountyManager.completeBounty(bountyByKilled.id, killer.uuid)

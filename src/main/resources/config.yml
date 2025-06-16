@@ -4,6 +4,9 @@ bounty-creation-cooldown-minutes: 2
 # The cooldown between how often you can be bountied
 bounty-target-cooldown-minutes: 2
 
+bounty-leaderboard-header: "<gold>Bounty Leaderboard ({type})"
+bounty-leaderboard-entry: "<gold>#{position}. <yellow>{player} - Completed: <gold>{completed} (${totalEarnings})"
+
 placed-bounty-recently: "<red>You placed a bounty too recently, there is a {time} minute cooldown!"
 received-bounty-recently: "<red>This player has received a bounty too recently!"
 cancel-bounty-no-active: "<red>You have no active bounties on player '{target}'."

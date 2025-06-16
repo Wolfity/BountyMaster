@@ -2,6 +2,7 @@ package me.wolfity.bountymaster.commands
 
 import me.wolfity.bountymaster.events.BountyCancelledEvent
 import me.wolfity.bountymaster.events.BountyPlacedEvent
+import me.wolfity.bountymaster.manager.LeaderboardType
 import me.wolfity.bountymaster.plugin
 import me.wolfity.developmentutil.ext.call
 import me.wolfity.developmentutil.ext.uuid
@@ -9,6 +10,8 @@ import me.wolfity.developmentutil.util.launchAsync
 import me.wolfity.developmentutil.util.minutesToMillis
 import me.wolfity.developmentutil.util.secondsToMillis
 import me.wolfity.developmentutil.util.sendStyled
+import me.wolfity.developmentutil.util.style
+import net.kyori.adventure.text.JoinConfiguration
 import org.bukkit.entity.Player
 import revxrsal.commands.annotation.Command
 import revxrsal.commands.annotation.Named
@@ -16,6 +19,27 @@ import revxrsal.commands.annotation.Optional
 import revxrsal.commands.annotation.Range
 
 class BountyCommand {
+
+    @Command("lb", "leaderboard", "bountylb", "bountyleaderboard")
+    fun onLeaderboard(sender: Player, @Optional @Named("leaderboardtype") leaderboardType: LeaderboardType?) {
+        val type = leaderboardType ?: LeaderboardType.COMPLETED
+        val header = plugin.config.getString("bounty-leaderboard-header")!!.replace("{type}", type.display)
+
+        launchAsync {
+            val top10 = plugin.bountyManager.getTopNLeaderboard(10, type)
+            val body = top10.mapIndexed { index, stats ->
+                val player = plugin.playerRegistry.getDataByUUID(stats.completer)!!
+                plugin.config.getString("bounty-leaderboard-entry")!!
+                    .replace("{position}", (index + 1).toString())
+                    .replace("{player}", player.name)
+                    .replace("{completed}", stats.completedCount.toString())
+                    .replace("{totalEarnings}", stats.totalReward.toString())
+            }
+
+            sender.sendStyled(style(header))
+            sender.sendStyled(style(body, JoinConfiguration.newlines()))
+        }
+    }
 
     @Command("placebounty")
     fun onPlaceBounty(
@@ -42,7 +66,7 @@ class BountyCommand {
             }
 
             val cooldownMinutes = plugin.config.getLong("bounty-creation-cooldown-minutes")
-            val cooldownMillis = secondsToMillis(cooldownMinutes)
+            val cooldownMillis = minutesToMillis(cooldownMinutes)
 
             if (plugin.bountyManager.hasPlayerPlacedBountyRecently(sender.uuid, cooldownMillis)) {
                 val cooldownMessage = plugin.config.getString("placed-bounty-recently")
@@ -51,8 +75,8 @@ class BountyCommand {
                 return@launchAsync
             }
 
-            val targetCooldownSeconds = plugin.config.getLong("bounty-target-cooldown-seconds")
-            val targetCooldownMillis = secondsToMillis(targetCooldownSeconds)
+            val targetCooldownMinutes = plugin.config.getLong("bounty-target-cooldown-minutes")
+            val targetCooldownMillis = minutesToMillis(targetCooldownMinutes)
 
             if (plugin.bountyManager.hasHadBountyInTimeWindow(targetUser.uuid, targetCooldownMillis)) {
                 sender.sendStyled(plugin.config.getString("received-bounty-recently")!!)
@@ -88,7 +112,7 @@ class BountyCommand {
                 return@launchAsync
             }
 
-            val activeBounties = plugin.bountyManager.getBountiesByCreator(sender.uuid)
+            val activeBounties = plugin.bountyManager.getActiveBountiesByCreator(sender.uuid)
                 .filter { it.target == targetPlayer.uuid }
 
             if (activeBounties.isEmpty()) {

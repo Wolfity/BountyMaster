@@ -36,7 +36,9 @@ class BountyManager {
                     completedAt = row[Bounties.completedAt],
                     completer = row[Bounties.completer]
                 )
-                cacheBounty(bounty)
+                if (!bounty.isCompleted()) {
+                    cacheBounty(bounty)
+                }
             }
         }
     }
@@ -142,10 +144,7 @@ class BountyManager {
         } > 0
 
         if (updated) {
-            val updatedBounty = bounty.copy(completedAt = now, completer = completer)
-            activeBountiesCache[bountyId] = updatedBounty
-            bountiesByCreator[bounty.creator]?.run { remove(bounty); add(updatedBounty) }
-            bountiesByTarget[bounty.target]?.run { remove(bounty); add(updatedBounty) }
+            removeBountyFromCache(bounty)
         }
 
         updated
@@ -168,6 +167,34 @@ class BountyManager {
             }
     }
 
+    suspend fun getTopNLeaderboard(n: Int, leaderboardType: LeaderboardType): List<BountyCompleteStats> =
+        newSuspendedTransaction {
+            val completer = Bounties.completer
+            val completedCount = Bounties.id.count()
+            val totalReward = Bounties.reward.sum()
+
+            val orderByColumn = when (leaderboardType) {
+                LeaderboardType.COMPLETED -> completedCount
+                LeaderboardType.EARNINGS -> totalReward
+            }
+
+            Bounties
+                .select(listOf(completer, completedCount, totalReward))
+                .where {
+                    (completer.isNotNull()) and (Bounties.completedAt.isNotNull())
+                }
+                .groupBy(completer)
+                .orderBy(orderByColumn, SortOrder.DESC)
+                .limit(n)
+                .map { row ->
+                    BountyCompleteStats(
+                        completer = row[completer]!!,
+                        completedCount = row[completedCount].toInt(),
+                        totalReward = row[totalReward]?.toInt() ?: 0
+                    )
+                }
+        }
+
     private fun hasRecentActiveBountyOnTarget(target: UUID, timeWindowMillis: Long): Boolean {
         val now = System.currentTimeMillis()
         return bountiesByTarget[target]?.any { (it.createdAt + it.duration) >= (now - timeWindowMillis) && !it.isCompleted() } == true
@@ -180,6 +207,7 @@ class BountyManager {
 
     suspend fun expireBounty(bountyId: Long): Boolean = newSuspendedTransaction {
         val bounty = activeBountiesCache[bountyId] ?: return@newSuspendedTransaction false
+        if (bounty.isCompleted()) return@newSuspendedTransaction false
 
         Bounties.deleteWhere { id eq bountyId }
         removeBountyFromCache(bounty)
@@ -188,15 +216,11 @@ class BountyManager {
 
     fun getActiveBounties(): List<Bounty> = activeBountiesCache.values.filter { !it.isCompleted() }.toList()
 
-    fun getBountiesByCreator(creator: UUID): List<Bounty> =
+    fun getActiveBountiesByCreator(creator: UUID): List<Bounty> =
         bountiesByCreator[creator]?.toList() ?: emptyList()
 
-    fun getBountyByCreator(creator: UUID): Bounty? =
-        bountiesByCreator[creator]?.firstOrNull()
-
-    fun getBountyByTarget(target: UUID) : Bounty? {
-        return bountiesByTarget[target]?.firstOrNull()
-    }
+    fun getActiveBountyByTarget(target: UUID): Bounty? =
+        bountiesByTarget[target]?.firstOrNull()
 
     fun isBountyExpired(bounty: Bounty): Boolean {
         val now = System.currentTimeMillis()

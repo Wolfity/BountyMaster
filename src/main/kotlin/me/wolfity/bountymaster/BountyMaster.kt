@@ -12,6 +12,7 @@ import me.wolfity.bountymaster.tasks.BountyHealthCheckTask
 import me.wolfity.developmentutil.ext.registerListener
 import me.wolfity.developmentutil.files.CustomConfig
 import me.wolfity.developmentutil.gui.GUIListener
+import me.wolfity.developmentutil.misc.UpdateChecker
 import me.wolfity.developmentutil.player.PlayerManager
 import me.wolfity.developmentutil.player.PlayerRegistryListener
 import me.wolfity.developmentutil.sql.PlayerRegistry
@@ -27,8 +28,7 @@ lateinit var plugin: BountyMaster
 class BountyMaster : JavaPlugin() {
 
     companion object {
-        // TODO after release
-//        const val RESOURCE_ID = -1
+        const val RESOURCE_ID = 126079
     }
 
     private lateinit var _playerRegistry: PlayerManager
@@ -39,6 +39,7 @@ class BountyMaster : JavaPlugin() {
         get() = _playerRegistry
 
     private lateinit var _bountyManager: BountyManager
+    private lateinit var updateChecker: UpdateChecker
 
     val bountyManager: BountyManager
         get() = _bountyManager
@@ -49,6 +50,10 @@ class BountyMaster : JavaPlugin() {
 
     override fun onEnable() {
         plugin = this
+
+        this.updateChecker = UpdateChecker(this, plugin.description.version, RESOURCE_ID)
+
+        updateCheck()
 
         loadFiles()
         DatabaseManager.init()
@@ -88,6 +93,7 @@ class BountyMaster : JavaPlugin() {
         PlayerRegistryListener(playerRegistry).registerListener(this)
         GUIListener().registerListener(this)
         BountyListener().registerListener(this)
+        updateChecker.registerListener(this)
     }
 
     private fun registerManagers() {
@@ -105,6 +111,19 @@ class BountyMaster : JavaPlugin() {
             throw IllegalArgumentException("No Economy plugin has been found!")
         }
         _economy = rsp.getProvider()
+    }
+
+    private fun updateCheck() {
+        updateChecker.getVersion(
+            this,
+            RESOURCE_ID
+        ) { version ->
+            if (this.description.version == version) {
+                logger.info("There is not a new update available.");
+            } else {
+                logger.info("There is a new update available for ${plugin.description.name}");
+            }
+        }
     }
 
 }

@@ -13,4 +13,6 @@ data class Bounty(
     val completer: UUID? = null
 ) {
     fun isCompleted() = completedAt != null && completer != null
+    override fun equals(other: Any?) = other is Bounty && other.id == this.id
+    override fun hashCode() = id.hashCode()
 }
